@@ -1,0 +1,8 @@
+length = input("length:")
+unit = input("km or m: ")
+if unit == "km":
+    print("Area : " + str(int(length) * 1000) + "m")
+    print("Perimeter : " + str(2 * (int(length) * 1000)) + "m")
+elif unit == "m":
+    print("Area : " + str(int(length) / 1000) + "km")
+    print("Perimeter : " + str(2 * (int(length) / 1000)) + "km")
