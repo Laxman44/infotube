@@ -1,0 +1,8 @@
+unit = float(input("weight: "))
+weight = input("(K)g or (l)bs: ")
+if weight.upper() == "k":
+    convert = weight/0.4
+    print("weight in lbs: ")
+else:
+    convert = float(weight)* 0.4
+print("weight in kg: ")
