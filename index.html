@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QuizMaster Node</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-gray-950 text-white font-sans min-h-screen flex flex-col selection:bg-indigo-500 selection:text-white">
+
+    <!-- --- MAIN MENU --- -->
+    <div id="view-menu" class="view-section flex flex-col items-center justify-center min-h-screen p-4">
+        <h1 class="text-7xl md:text-9xl font-black mb-4 text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-500 tracking-tighter text-center">QUIZ<br>MASTER</h1>
+        <p class="text-2xl text-gray-400 mb-12 text-center">Real-time Multiplayer Trivia</p>
+        
+        <div class="flex flex-col md:flex-row gap-6 w-full max-w-2xl">
+            <button id="btn-menu-host" class="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white text-2xl font-bold py-8 rounded-2xl shadow-lg transition transform hover:-translate-y-1">Host Game</button>
+            <button id="btn-menu-join" class="flex-1 bg-gray-800 hover:bg-gray-700 text-white text-2xl font-bold py-8 rounded-2xl shadow-lg transition transform hover:-translate-y-1">Join Game</button>
+        </div>
+    </div>
+
+    <!-- --- HOST LOBBY --- -->
+    <div id="view-host-lobby" class="view-section hidden flex-col items-center justify-center min-h-screen p-4">
+        <div class="bg-gray-900 p-10 rounded-3xl border border-gray-800 text-center w-full max-w-4xl shadow-2xl">
+            <p class="text-gray-500 uppercase tracking-widest font-bold mb-2">Room Code</p>
+            <div id="host-room-code" class="text-8xl font-mono font-black text-white mb-10 tracking-widest">---</div>
+            
+            <div class="mb-10">
+                <h3 class="text-2xl font-bold mb-4">Players Joined: <span id="host-player-count">0</span></h3>
+                <div id="host-player-list" class="flex flex-wrap justify-center gap-3">
+                    <!-- Player badges go here -->
+                </div>
+            </div>
+            
+            <button id="btn-host-start" class="w-full bg-green-600 hover:bg-green-500 text-white text-3xl font-bold py-6 rounded-xl shadow-xl transition disabled:opacity-50 disabled:cursor-not-allowed" disabled>Start Game</button>
+        </div>
+    </div>
+
+    <!-- --- PLAYER JOIN --- -->
+    <div id="view-player-join" class="view-section hidden flex-col items-center justify-center min-h-screen p-4">
+        <div class="bg-gray-900 p-8 rounded-3xl border border-gray-800 w-full max-w-md shadow-2xl">
+            <h2 class="text-4xl font-black mb-8 text-center">Join Game</h2>
+            <form id="form-join" class="space-y-6">
+                <div>
+                    <label class="block text-gray-400 font-bold mb-2 uppercase text-sm">Your Name</label>
+                    <input type="text" id="input-name" class="w-full bg-gray-800 border-2 border-gray-700 rounded-xl p-4 text-xl focus:border-indigo-500 outline-none text-white" required maxlength="12">
+                </div>
+                <div>
+                    <label class="block text-gray-400 font-bold mb-2 uppercase text-sm">Room Code</label>
+                    <input type="number" id="input-code" class="w-full bg-gray-800 border-2 border-gray-700 rounded-xl p-4 text-xl focus:border-indigo-500 outline-none text-white font-mono text-center tracking-widest" required>
+                </div>
+                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white text-xl font-bold py-4 rounded-xl shadow-lg transition">Enter</button>
+                <button type="button" id="btn-join-back" class="w-full text-gray-500 font-bold py-2 hover:text-white">Back</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- --- PLAYER WAITING --- -->
+    <div id="view-player-waiting" class="view-section hidden flex-col items-center justify-center min-h-screen p-4 text-center">
+        <div class="bg-gray-900 p-12 rounded-full border-4 border-gray-800 mb-8 animate-pulse">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-24 w-24 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+        </div>
+        <h2 class="text-4xl font-bold mb-2">You're In!</h2>
+        <p class="text-2xl text-gray-400">Waiting for host to start...</p>
+        <p id="player-display-name" class="mt-8 text-indigo-400 font-bold text-xl bg-gray-900 px-6 py-2 rounded-full inline-block">---</p>
+        
+        <!-- Rules of the game -->
+        <div class="mt-10 max-w-2xl text-left bg-gray-800 p-6 rounded-xl border border-gray-700">
+            <h3 class="text-2xl font-bold mb-4">Game Rules</h3>
+            <ul class="list-disc list-inside space-y-2 text-gray-300">
+                <li>Answer multiple-choice questions as quickly and accurately as possible.</li>
+                <li>Each correct answer awards you 5 points; faster answers earn extra 10 for first, 5 for second and 2 for third fastest correct answerer points.</li>
+                <li>Incorrect answers result in 5 point deductions.</li>
+                <li>You can simply skip the question, for which no points will be deducted.</li>
+                <li>The player with the highest score at the end wins!</li>
+                <li>If two players scores the same, the one with the least total time will be the winner.</li>
+                <li><b>Have fun and good luck!</b></li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- --- GAME VIEW (SHARED HOST/PLAYER) --- -->
+    <div id="view-game" class="view-section hidden flex-col min-h-screen">
+        <!-- Top Bar -->
+        <div class="flex justify-between items-center p-6 bg-gray-900/50 border-b border-gray-800 backdrop-blur-sm z-20">
+            <div class="flex items-center gap-4">
+                <span class="text-gray-500 font-bold uppercase tracking-wider text-sm">Question <span id="q-current">1</span>/<span id="q-total">10</span></span>
+            </div>
+            <div class="flex flex-col items-end">
+                 <div id="timer-display" class="text-4xl font-black text-white tabular-nums">15</div>
+                 <div class="text-xs text-gray-500 uppercase font-bold">Seconds</div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="flex-1 flex flex-col md:flex-row relative">
+            
+            <!-- Question Area -->
+            <div class="flex-1 flex flex-col p-6 md:p-12 justify-center items-center relative z-10">
+                <h2 id="question-text" class="text-3xl md:text-5xl font-bold text-center leading-tight mb-12 max-w-5xl drop-shadow-md">
+                    Loading Question...
+                </h2>
+                
+                <div id="options-grid" class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-5xl">
+                    <!-- Options injected here -->
+                </div>
+
+                <!-- Host Controls (Only visible to Host) -->
+                <div id="host-controls" class="mt-12 hidden">
+                    <button id="btn-host-next" class="bg-indigo-600 hover:bg-indigo-500 text-white px-12 py-4 text-2xl font-bold rounded-xl shadow-xl transition flex items-center gap-3">
+                        Next Question
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M9 5l7 7-7 7" /></svg>
+                    </button>
+                </div>
+                
+                <!-- Player Score Status -->
+                <div id="player-status-bar" class="mt-12 hidden">
+                     <div class="bg-gray-900 border border-gray-800 px-8 py-4 rounded-full text-2xl font-bold">
+                         Score: <span id="my-score" class="text-indigo-400">0</span>
+                     </div>
+                </div>
+            </div>
+
+            <!-- Sidebar Leaderboard (Visible on wide screens) -->
+            <div class="w-full md:w-80 bg-gray-900 border-l border-gray-800 p-6 flex flex-col h-[30vh] md:h-auto overflow-hidden">
+                <h3 class="text-xl font-bold text-gray-400 mb-4 uppercase tracking-wider flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-yellow-500" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg>
+                    Live Scores
+                </h3>
+                <div id="leaderboard-list" class="space-y-3 overflow-y-auto custom-scrollbar flex-1">
+                    <!-- Leaderboard items -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- --- GAME OVER --- -->
+    <div id="view-game-over" class="view-section hidden flex-col items-center justify-center min-h-screen p-4">
+        <h2 class="text-6xl font-black text-yellow-400 mb-8 drop-shadow-lg">Final Standings</h2>
+        <div id="final-leaderboard" class="w-full max-w-2xl space-y-4 mb-12">
+            <!-- Final items -->
+        </div>
+        <button onclick="location.reload()" class="bg-gray-800 hover:bg-gray-700 text-white px-10 py-4 rounded-xl font-bold text-xl transition">Back to Menu</button>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

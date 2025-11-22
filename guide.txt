@@ -1,0 +1,25 @@
+
+
+Backend is handled with server.js file
+Frontend is done with index.html style.css and scripts.js files
+
+
+# To run this webapp
+1. for the first time 
+  npm install  # provided node.js is installed in your system.
+  node server.js  # and then visit localhost:3000 in the browser
+
+2. after first time
+   node server.js 
+   
+
+# To add more questions
+just add a question in the same format as in questions.json file
+
+# To add seperate question pile
+just create new_questions.json file inside /data directory and replace with that filename in sever.js file in the line 14(till)
+         const data = fs.readFileSync(path.join(__dirname, 'data', 'new_questions.json'), 'utf8');
+
+
+# To manually select the questions range, modify the line in server.js file in host_start_game event(line 52 for now)
+            room.gameQuestions = questionsData.filter(q => q.id >= 5 && q.id <= 14);
